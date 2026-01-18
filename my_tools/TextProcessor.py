@@ -23,7 +23,15 @@ class TextProcessor():
 
     @staticmethod
     def concordance(tokens, target, width=5):
-        pass
+        target = target.lower()
+        results = []
+        for i, token in enumerate(tokens): 
+            if token == target: 
+                left = " ".join(tokens[max(0, i - width): i]) 
+                right = " ".join(tokens[i + 1: i + 1 + width]) 
+                results.append((left, token, right))
+        
+        return results
 
     @staticmethod
     def ngrams(tokens, target, n):
