@@ -1,5 +1,5 @@
 import os
-from my_tools.Document import Document
+from Document import Document
 
 class Corpus():
     def __init__(self, folder_path):
@@ -12,6 +12,10 @@ class Corpus():
         for filename in os.listdir(self.folderpath):
             filepath = os.path.join(self.folderpath, filename)
             doc = Document(filepath)
+            
+            # check if there is text in image pages
+            doc.take_tokens_from_image_pages()
+            
             # add reaction if doc was not pdf
             documents.append(doc)
 
@@ -32,4 +36,5 @@ class Corpus():
         return tokens
 
 if __name__ == "__main__":
-    corp = Corpus("Corpus/raw_data/")
+    corp = Corpus('/Users/sofiebenjaminsen/Library/CloudStorage/GoogleDrive-sofiejb@gmail.com/Min disk/Colab Notebooks/NPD relinquishment reports - 30-12-2025')
+    #corp = Corpus("Corpus/raw_data/")

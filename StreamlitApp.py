@@ -6,8 +6,8 @@ from my_tools.Document import Document
 from my_tools.TextProcessor import TextProcessor
 
 class StreamlitApp():
-    def __init__(self):
-        self.corpus = Corpus("Corpus/raw_data/") 
+    def __init__(self, corpus_path = "Corpus/raw_data/"):
+        self.corpus = Corpus(corpus_path) 
         
         self.processor = TextProcessor()
 
@@ -113,4 +113,4 @@ class StreamlitApp():
                 st.markdown(" ".join(gram))
 
 if __name__ == "__main__":
-    StreamlitApp()
+    StreamlitApp('/Users/sofiebenjaminsen/Library/CloudStorage/GoogleDrive-sofiejb@gmail.com/Min disk/Colab Notebooks/NPD relinquishment reports - 30-12-2025')
