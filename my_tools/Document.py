@@ -31,9 +31,6 @@ class Document():
             return True
         
     def extract_pdf_text(self):
-        #check wether pdf
-        if not self._check_file_type():
-            return
 
         # use pdf-miner to extract text
         text = pdfhl.extract_text(self.file_path)

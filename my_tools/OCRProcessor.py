@@ -6,7 +6,6 @@ import sys
 import os
 import warnings
 from tqdm import tqdm
-from StderrSuppressor import StderrSuppressor
 
 
 # give path to tesseract brew installation

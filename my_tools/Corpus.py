@@ -1,6 +1,7 @@
 import os
 from Document import Document
 from tqdm import tqdm
+from pathlib import Path
 import sys
 import pickle
 
@@ -14,15 +15,16 @@ class Corpus():
         
         for filename in tqdm(os.listdir(self.folderpath), desc="Documents", position=0, leave=False):
             filepath = os.path.join(self.folderpath, filename)
-            pickle_path = filepath + ".pkl"
+            filename = Path(filepath).name
+            pickle_path = Path("Corpus/pickled") / (filename + ".pkl")
 
             # Load cached document if exists
-            #if os.path.exists(pickle_path):
-            #    with open(pickle_path, "rb") as f:
-            #        doc = pickle.load(f)
-            #else:
-            doc = Document(filepath)
-            
+            if os.path.exists(pickle_path):
+                with open(pickle_path, "rb") as f:
+                    doc = pickle.load(f)
+            else:
+                doc = Document(filepath)
+
             # Save for next time
             with open(pickle_path, "wb") as f:
                 pickle.dump(doc, f)
