@@ -1,5 +1,8 @@
 import os
 from Document import Document
+from tqdm import tqdm
+import sys
+import pickle
 
 class Corpus():
     def __init__(self, folder_path):
@@ -9,14 +12,21 @@ class Corpus():
     def _load_documents(self):
         documents = []
         
-        for filename in os.listdir(self.folderpath):
+        for filename in tqdm(os.listdir(self.folderpath), desc="Documents", position=0, leave=False):
             filepath = os.path.join(self.folderpath, filename)
+            pickle_path = filepath + ".pkl"
+
+            # Load cached document if exists
+            #if os.path.exists(pickle_path):
+            #    with open(pickle_path, "rb") as f:
+            #        doc = pickle.load(f)
+            #else:
             doc = Document(filepath)
             
-            # check if there is text in image pages
-            doc.take_tokens_from_image_pages()
-            
-            # add reaction if doc was not pdf
+            # Save for next time
+            with open(pickle_path, "wb") as f:
+                pickle.dump(doc, f)
+
             documents.append(doc)
 
         return documents
