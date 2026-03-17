@@ -1,5 +1,5 @@
 import os
-from Document import Document
+from my_tools.Document import Document
 from tqdm import tqdm
 from pathlib import Path
 import sys
@@ -14,9 +14,9 @@ class Corpus():
         documents = []
         
         for filename in tqdm(os.listdir(self.folderpath), desc="Documents", position=0, leave=False):
-            if not filename.endswith(".pdf"):
+            if not filename.lower().endswith(".pdf"):
                 continue
-            
+
             filepath = os.path.join(self.folderpath, filename)
             filename = Path(filepath).name
             pickle_path = Path("Corpus/pickled") / (filename + ".pkl")

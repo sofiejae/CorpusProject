@@ -1,6 +1,6 @@
 import pdfminer.high_level as pdfhl
 from pathlib import Path
-from OCRProcessor import OCRProcessor
+from my_tools.OCRProcessor import OCRProcessor
 import nltk
 import os
 import re
@@ -74,7 +74,10 @@ class Document():
         return text
 
     
-    #def extract_metadata_with_ai(self, genai: GenAIClient): """Use GenAI to extract metadata.""" ai_meta = genai.extract_metadata(self.first_page_text) self.metadata["ai_extracted"] = ai_meta
+    def extract_metadata_with_ai(self, genai: GenAIClient): 
+        """Use GenAI to extract metadata.""" 
+        ai_meta = genai.extract_metadata(self.first_page_text) 
+        self.metadata["ai_extracted"] = ai_meta
 
 if __name__ == "__main__":    
     doc = Document("Corpus/raw_data/22816484_Relinquishment_report_PL_679S.PDF")

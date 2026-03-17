@@ -7,10 +7,11 @@ from my_tools.TextProcessor import TextProcessor
 
 class StreamlitApp():
     def __init__(self, corpus_path = "Corpus/raw_data/"):
+        # create ciorus and processor objects
         self.corpus = Corpus(corpus_path) 
-        
         self.processor = TextProcessor()
 
+        # set up stramlit app
         st.title = "Relinquishment Report Explorer"
         st.sidebar.write(f"Loaded {len(self.corpus.documents)} documents")
 
@@ -38,6 +39,10 @@ class StreamlitApp():
             self.show_frequencies()
         elif self.mode == "Word frequency":
             self.show_word_frequency()
+
+    def show_metadata(self):
+
+        pass
 
     def show_concordance(self):
         st.header("Concordance") 

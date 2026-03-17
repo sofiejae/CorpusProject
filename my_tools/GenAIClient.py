@@ -29,3 +29,6 @@ class GenAIClient:
         """Summarize a document."""
         prompt = f"Summarize the following text in 5 bullet points:\n\n{text[:4000]}"
         return self.chat(prompt)
+
+if __name__ == "__main__":
+    client = GenAIClient()
