@@ -7,6 +7,9 @@ from my_tools.TextProcessor import TextProcessor
 
 class StreamlitApp():
     def __init__(self, corpus_path = "Corpus/raw_data/"):
+        # retrieve the API-key for the genAImodel
+        #api_key = st.secrets["OPENAI_KEY"]
+        
         # create ciorus and processor objects
         self.corpus = Corpus(corpus_path) 
         self.processor = TextProcessor()
