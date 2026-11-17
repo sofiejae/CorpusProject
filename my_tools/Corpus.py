@@ -134,4 +134,31 @@ class Corpus:
 
     @staticmethod
     def _text_hash(doc):
-        return
+        return hashlib.sha1(doc.text.encode("utf-8")).hexdigest()
+
+    def duplicate_groups(self):
+        """Groups of documents with identical text (the same report filed under several IDs)."""
+        groups = {}
+        for doc in self.documents:
+            groups.setdefault(self._text_hash(doc), []).append(doc.filename)
+        return [names for names in groups.values() if len(names) > 1]
+
+    def unique_documents(self):
+        """The documents, keeping only the first of each group of identical texts.
+        Duplicates would otherwise count twice in frequencies and collocations."""
+        seen = set()
+        unique = []
+        for doc in self.documents:
+            h = self._text_hash(doc)
+            if h not in seen:
+                seen.add(h)
+                unique.append(doc)
+        return unique
+
+
+if __name__ == "__main__":
+    import sys
+
+    folder = sys.argv[1] if len(sys.argv) > 1 else "Corpus/raw_data/"
+    corp = Corpus(folder)
+    print(f"Loaded {len(corp)} documents, {len(corp.get_all_tokens())} tokens")
