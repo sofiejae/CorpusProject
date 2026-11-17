@@ -49,9 +49,9 @@ class StreamlitApp:
 
         skipped = len(self.corpus.documents) - len(self.documents)
         st.sidebar.write(f"Loaded {len(self.documents)} documents" + (f" ({skipped} duplicates skipped)" if skipped else ""))
-        if self.corpus.failed:
-            st.sidebar.warning(f"{len(self.corpus.failed)} file(s) could not be read: "
-                               + ", ".join(name for name, _ in self.corpus.failed))
+        first_name, first_error = self.corpus.failed[0]
+        st.sidebar.warning(f"{len(self.corpus.failed)} file(s) could not be read. "
+                               f"First problem: {first_name}: {first_error}")
         if not self.documents:
             st.warning("No documents found. Choose another source, or add PDFs to the folder.")
             st.stop()

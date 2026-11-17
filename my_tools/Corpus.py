@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import pickle
+import pathlib
 from pathlib import Path
 
 from tqdm import tqdm
@@ -12,6 +13,21 @@ logger = logging.getLogger(__name__)
 
 # <project root>/Corpus/pickled, independent of the directory the program is started from
 DEFAULT_CACHE_DIR = Path(__file__).resolve().parent.parent / "Corpus" / "pickled"
+
+
+class _PortableUnpickler(pickle.Unpickler):
+    """Unpickler that can read cache files made on any operating system.
+
+    A pickled pathlib.PosixPath (made on Mac/Linux) cannot be loaded on Windows, and a WindowsPath
+    cannot be loaded on Mac/Linux ("cannot instantiate 'PosixPath' on your system").
+    We load all concrete paths as the OS-neutral pathlib.PurePath instead.
+    """
+
+    def find_class(self, module, name):
+        # the module is "pathlib" on Python <= 3.12 and "pathlib._local" on Python >= 3.13
+        if (module == "pathlib" or module.startswith("pathlib.")) and name in ("PosixPath", "WindowsPath"):
+            return pathlib.PurePath
+        return super().find_class(module, name)
 
 
 class Corpus:
@@ -42,22 +58,25 @@ class Corpus:
         if not self.cache_dir.is_dir():
             raise FileNotFoundError(f"Cache folder not found: {self.cache_dir}")
         for pkl in tqdm(sorted(self.cache_dir.glob("*.pkl")), desc="Cached documents", leave=False):
-            doc = self._read_pickle(pkl)
+            doc, error = self._read_pickle(pkl)
             if doc is None:
-                self.failed.append((pkl.name, "could not read cache file"))
+                self.failed.append((pkl.name, error))
             else:
                 self.documents.append(doc)
         self._index = {doc.filename: doc for doc in self.documents}
         return self
 
+    # ---------------------------------------------------------------- loading
+
     @staticmethod
     def _read_pickle(pickle_path):
+        """Returns (document, None) on success and (None, error message) on failure."""
         try:
             with open(pickle_path, "rb") as f:
-                return pickle.load(f)
+                return _PortableUnpickler(f).load(), None
         except Exception as e:  # corrupt or incompatible cache file
             logger.warning("Could not read cache file %s: %s", pickle_path, e)
-            return None
+            return None, f"{type(e).__name__}: {e}"
 
     def _write_pickle(self, doc, pickle_path):
         try:
@@ -79,7 +98,7 @@ class Corpus:
             pickle_path = self.cache_dir / (filename + ".pkl")
 
             # use the cached document if there is one
-            doc = self._read_pickle(pickle_path) if pickle_path.exists() else None
+            doc = self._read_pickle(pickle_path)[0] if pickle_path.exists() else None
 
             if doc is None:
                 try:
@@ -93,6 +112,8 @@ class Corpus:
             documents.append(doc)
 
         return documents
+
+    # ---------------------------------------------------------------- access
 
     def __len__(self):
         return len(self.documents)
@@ -109,33 +130,8 @@ class Corpus:
             tokens.extend(doc.tokens)
         return tokens
 
+    # ---------------------------------------------------------------- duplicates
+
     @staticmethod
     def _text_hash(doc):
-        return hashlib.sha1(doc.text.encode("utf-8")).hexdigest()
-
-    def duplicate_groups(self):
-        """Groups of documents with identical text (the same report filed under several IDs)."""
-        groups = {}
-        for doc in self.documents:
-            groups.setdefault(self._text_hash(doc), []).append(doc.filename)
-        return [names for names in groups.values() if len(names) > 1]
-
-    def unique_documents(self):
-        """The documents, keeping only the first of each group of identical texts.
-        Duplicates would otherwise count twice in frequencies and collocations."""
-        seen = set()
-        unique = []
-        for doc in self.documents:
-            h = self._text_hash(doc)
-            if h not in seen:
-                seen.add(h)
-                unique.append(doc)
-        return unique
-
-
-if __name__ == "__main__":
-    import sys
-
-    folder = sys.argv[1] if len(sys.argv) > 1 else "Corpus/raw_data/"
-    corp = Corpus(folder)
-    print(f"Loaded {len(corp)} documents, {len(corp.get_all_tokens())} tokens")
+        return

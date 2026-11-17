@@ -37,11 +37,19 @@ class Document:
         self.tokens = self._tokenize()
         self.nr_tokens = len(self.tokens)
 
+    def __getstate__(self):
+        """Used when pickling. The path is saved as plain text: a pathlib object made on Mac/Linux
+        cannot be loaded on Windows (and the other way round)."""
+        state = self.__dict__.copy()
+        state["file_path"] = str(self.file_path)
+        return state
+
     def __setstate__(self, state):
         """Called when unpickling. Lets documents cached by an older version of this class
         (which had no `metadata` attribute) load without errors."""
         self.__dict__.update(state)
         self.__dict__.setdefault("metadata", {})
+        self.file_path = Path(self.file_path)
         self._strip_cid_garbage()
 
     def _strip_cid_garbage(self):
