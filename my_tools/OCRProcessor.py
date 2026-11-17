@@ -1,36 +1,45 @@
-import pytesseract
-import pymupdf as mpdf
-from PIL import Image
 import io
-import sys
 import os
-import warnings
-from tqdm import tqdm
+import shutil
 
 
-# give path to tesseract brew installation
-pytesseract.pytesseract.tesseract_cmd = "/opt/homebrew/bin/tesseract"
+def _configure_tesseract(pytesseract):
+    """Find the tesseract binary on any OS.
 
-# ignore warnings such as: Cannot set gray non-stroke color because /'P2' is an invalid float value
-#warnings.filterwarnings("ignore", module="mpdf")
+    Order: TESSERACT_CMD environment variable -> PATH -> common Homebrew locations.
+    If nothing is found we leave pytesseract's default and let it raise its own error.
+    """
+    cmd = os.environ.get("TESSERACT_CMD") or shutil.which("tesseract")
+    if not cmd:
+        for candidate in ("/opt/homebrew/bin/tesseract", "/usr/local/bin/tesseract"):
+            if os.path.exists(candidate):
+                cmd = candidate
+                break
+    if cmd:
+        pytesseract.pytesseract.tesseract_cmd = cmd
 
 
-class OCRProcessor():
-    
+class OCRProcessor:
+
     @staticmethod
-    def pdf_text_image_to_string(pdf_file_path):
-        """takes a pdf with pages where """
+    def pdf_text_image_to_string(pdf_file_path, dpi=300, lang="eng"):
+        """OCR every page of a PDF (for scanned PDFs without a text layer) and return the text."""
+        # Imported here so that loading cached documents does not require PyMuPDF/Tesseract.
+        import pymupdf as mpdf
+        import pytesseract
+        from PIL import Image
+        from tqdm import tqdm
+
+        _configure_tesseract(pytesseract)
+
+        # silence MuPDF warnings such as: Cannot set gray non-stroke color because /'P2' is an invalid float value
         mpdf.TOOLS.mupdf_display_errors(False)
-        doc = mpdf.open(pdf_file_path) 
-        text = ""
 
-        for page in tqdm(doc, desc="Pages", position=1, leave=False):
-            pix = page.get_pixmap(colorspace=mpdf.csRGB, dpi=300) # Page → Pixmap 
-            img_bytes = pix.tobytes("png") # Pixmap → PNG bytes 
-            img = Image.open(io.BytesIO(img_bytes)) # Bytes → PIL Image 
+        texts = []
+        with mpdf.open(pdf_file_path) as doc:
+            for page in tqdm(doc, desc="Pages", position=1, leave=False, total=len(doc)):
+                pix = page.get_pixmap(colorspace=mpdf.csRGB, dpi=dpi)  # Page -> Pixmap
+                img = Image.open(io.BytesIO(pix.tobytes("png")))        # Pixmap -> PIL image
+                texts.append(pytesseract.image_to_string(img, lang=lang).strip())  # OCR
 
-            output = pytesseract.image_to_string(img).strip() # OCR
-
-            text = text + " " + output
-
-        return text
+        return " ".join(texts)
